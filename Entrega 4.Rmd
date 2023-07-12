@@ -1,14 +1,92 @@
 ---
-title: "Entrega 4"
-output: html_document
+title: "Represión Estatal"
 date: "2023-07-12"
+output:
+  html_document:
+    toc: yes
+    df_print: paged
+  prettydoc::html_pretty:
+    theme: hpstr
+    highlight: github
+    toc: yes
 ---
 
 
 ```{r}
 library(rio)
-data=import("datapr.xlsx")
+
+d1 = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSxZIpRqxr3-WT10cyRRtqxbZW0d_KRfC7ch6OPJNM_S4WzaNuKT4J2ONq67WjfiLQWIFBroxjAwZGY/pub?output=csv"
+data = read.csv(d1)
 ```
+
+
+# Objetivo del analisis: 
+
+El objetivo de este análisis cuantitativo es examinar la relación entre la represión estatal en el mundo y las variables independientes: inversión extranjera directa (IED), exclusión por índice de localización urbano rural, nivel de institucionalización de los partidos políticos, índice de paz positiva, cercanía a Occidente, corrupción, grado de libertad de prensa, nivel de desigualdad económica, nivel de ingresos, índice de desarrollo humano, libertad económica y estado de derecho. El estudio tiene como finalidad identificar las posibles influencias de estas variables en la represión estatal y comprender su interacción con el fenómeno.
+
+Mediante un enfoque de análisis cuantitativo, se recopilarán datos de una amplia muestra de países y se utilizarán técnicas estadísticas, como análisis de regresión, para examinar las relaciones entre la represión estatal y las variables independientes mencionadas.Y analisis de congloemrados que permitira agrupar las variables en base a su similitud. El objetivo principal es determinar si existe una asociación significativa entre la represión estatal y estas variables, y en qué medida cada una de ellas puede explicar la variabilidad en los niveles de represión observados.
+
+Al obtener resultados significativos, se espera proporcionar una comprensión más profunda de los factores que contribuyen a la represión estatal en el mundo. Esto permitirá informar y respaldar la formulación de políticas y estrategias destinadas a reducir la represión estatal y promover la protección de los derechos humanos a nivel global. Además, este análisis contribuirá al cuerpo de conocimientos existente sobre la relación entre la represión estatal y las variables socioeconómicas y políticas.
+
+
+
+# Construccion de bases de datos 
+
+La bases de datos La variable dependiente es el nivel de represión estatal en el mundo, recuperado del Índice de violencia física de la base de datos de V-dem
+.
+Tenemos 12 variable independientes relevantes para explicar el comportamiento de la variable dependiente.
+
+V1. Inversión Extranjera directa (IED).
+V2. Exclusión por índice de localización urbano rural
+V3. Nivel de institucionalización de los partidos políticos
+V4. Índice de paz positiva
+V5. Cercanía a Occidente
+V6 :Corrupción
+V7: Grado de libertad de prensa
+V8: Nivel de desigualdad económica
+V9: Nivel de ingresos
+V10:Índice de desarrollo humano
+V11: Libertad Económica
+V12: Estado de Derecho
+
+Para el proceso de creacion de base de datos, en orimer lugar, se recopilaros las bases de datos y estadisticas. En segundo lugar, de forma individual, trabajamos las tres variables independientes junto a la varibale dependiente. Limpiamos la data disponible, juntamos las variables en un data frame y, por ultimo hicimos, de la base de datos creada con la base de datos de la variable dependiente. El proceso de merge consisitió en cambiar el nombre de las columnas, seleccionar las columnas relevantes a traves del uso de codigos de limpieza y de dplyr, con el fin de perder la menor cantidad de casos. Por ultimo el merge permitio que unifiquemos la bases de datos creadas de forma individual.  
+
+
+
+# Regresiones
+
+```{r}
+modelo1 <- lm(v2x_clphy ~ fdi + v2xps_party + v2xpe_exlgeo, data = data)
+summary(modelo1)
+```
+
+
+```{r}
+reg1=lm(modelo1,data=data)
+summary(reg1)
+```
+
+```{r}
+library(knitr)
+library(modelsummary)
+reg1=lm(modelo1,data=data)
+modelo1=list('Modelo 1'=reg1)
+modelsummary(modelo1, title = "Regresion: modelo 1",
+             stars = TRUE,
+             output = "kableExtra")
+```
+
+El modelo salió significativo, pero con un R2 de 0.3798; esto significa que el 37.98% de la variabilidad de la variable dependiente puede ser explicada por las variables independientes empleadas. 
+
+Vemos que la variable con mayor significancia es exclusión por índice de Localización Urbano-Rural (v2xpe_exlgeo). 
+
+Esto se interpreta como: A mayor nivel de exclusión en el índice de Localización Urbano-Rural, el respeto a la integridad física por parte del Estado se reduce en -5.159e-01. 
+
+Por otro lado, vemos que mientras más institucionalizado se encuentren los partidos de un país, habrá más respeto por la integridad física de los ciudadanos de parte del Estado. Sin embargo, esto se da con una significancia al 0.01. 
+
+
+Juzgo que vale la pena estabelcer la correlación entre la variable dependiente y la exclusión or índice de localización Urbano-Rural. 
+
 
 # Análisis factorial exploratorio: 
 
@@ -31,7 +109,7 @@ str(data$nivel_ingresos)
 
 excluimos las que no pueden entrar en el análisis. 
 ```{r}
-dontselect=c("pais","civilizacion","regimen","nivel_ingresos") #o sea le digo las columnas que no quiero que seleccione
+dontselect=c("pais","civilizacion","regimen","nivel_ingresos","fdi") #o sea le digo las columnas que no quiero que seleccione
 select=setdiff(names(data),dontselect) 
 theData=data[,select] #crea una nueva data sin esas columnas
 ```
@@ -65,7 +143,6 @@ convertimos las que no.
 ```{r}
 theData$corrupcion <- as.numeric(theData$corrupcion)
 theData$Tasa_pobreza<- as.numeric(theData$Tasa_pobreza)
-theData$libertad_prensa<- as.numeric(theData$libertad_prensa)
 ```
 
 confirmamos:
@@ -205,37 +282,37 @@ DinaAsesina$libertad_prensa<- as.numeric(DinaAsesina$libertad_prensa)
 
 
 ```{r}
-boxplot(DinaAsesina[,c(2:11)],horizontal = F,las=2,cex.axis = 0.5)
+boxplot(DinaAsesina[,c(2,3,4,5,7,8,9,10,11,12,13)],horizontal = F,las=2,cex.axis = 0.5)
 ```
 
 cambiamos el rango para poder leer
 
 ```{r}
 library(BBmisc)
-boxplot(normalize(DinaAsesina[,c(2:11)],method='range',range=c(0,10)))
+boxplot(normalize(DinaAsesina[,c(2,4,5,7,8,9,10,11,12,13)],method='range',range=c(0,10)))
 ```
 
 tipificamos: 
 
 ```{r}
-boxplot(normalize(DinaAsesina[,c(2:11)],method='standardize'))
+boxplot(normalize(DinaAsesina[,c(2,4,5,7,8,9,10,11,12,13)],method='standardize'))
 ```
 
 
 ```{r}
-DinaAsesina[,c(2:11)]=normalize(DinaAsesina[,c(2:11)],method='standardize')
+DinaAsesina[,c(2,4,5,7,8,9,10,11,12,13)]=normalize(DinaAsesina[,c(2,4,5,7,8,9,10,11,12,13)],method='standardize')
 ```
 
 
 correlacion: 
 
 ```{r}
-cor(DinaAsesina[,c(2:11)])
+cor(DinaAsesina[,c(2,4,5,7,8,9,10,11,12,13)])
 ```
 
 
 ```{r}
-dataClus=DinaAsesina[,c(2:11)]
+dataClus=DinaAsesina[,c(2,4,5,7,8,9,10,11,12,13)]
 row.names(dataClus)=DinaAsesina$pais
 ```
 
